@@ -91,7 +91,7 @@
     return self;
 }
 
-- (void)setAudioURL:(NSURL *)audioURL
+- (void)setAudioURL:(NSURL *)audioURL zoomStartSamples:(long int)zoomStartSamples zoomEndSamples:(long int)zoomEndSamples
 {
     _audioURL = audioURL;
     self.loadingInProgress = YES;
@@ -99,7 +99,7 @@
         [self.delegate waveformViewWillLoad:self];
     self.asset = [AVURLAsset URLAssetWithURL:audioURL options:nil];
     self.assetTrack = [[self.asset tracksWithMediaType:AVMediaTypeAudio] firstObject];
-
+    
     [self.asset loadValuesAsynchronouslyForKeys:@[@"duration"] completionHandler:^() {
         self.loadingInProgress = NO;
         if ([self.delegate respondsToSelector:@selector(waveformViewDidLoad:)])
@@ -112,13 +112,14 @@
                 self.image.image = nil;
                 self.highlightedImage.image = nil;
                 _progressSamples = 0; // skip setter
-                _zoomStartSamples = 0; // skip setter
-
+                _zoomStartSamples = zoomStartSamples;
+                
                 NSArray *formatDesc = self.assetTrack.formatDescriptions;
                 CMAudioFormatDescriptionRef item = (__bridge CMAudioFormatDescriptionRef)formatDesc[0];
                 const AudioStreamBasicDescription *asbd = CMAudioFormatDescriptionGetStreamBasicDescription(item);
                 unsigned long int samples = asbd->mSampleRate * (float)self.asset.duration.value/self.asset.duration.timescale;
                 _totalSamples = _zoomEndSamples = samples;
+                _zoomEndSamples = zoomEndSamples == 0 ?: zoomEndSamples;
                 [self setNeedsDisplay];
                 [self performSelectorOnMainThread:@selector(setNeedsLayout) withObject:nil waitUntilDone:NO];
                 break;
@@ -133,6 +134,11 @@
                 break;
         }
     }];
+}
+
+- (void)setAudioURL:(NSURL *)audioURL
+{
+    [self setAudioURL:audioURL zoomStartSamples:0 zoomEndSamples:0]; // if zoomEndSamples = 0, ignore _zoomEndSamples setter.
 }
 
 - (void)setProgressSamples:(long)progressSamples

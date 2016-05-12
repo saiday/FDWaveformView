@@ -23,6 +23,9 @@
 @property (nonatomic) BOOL doesAllowScroll;
 @property (nonatomic, copy) UIColor *wavesColor;
 @property (nonatomic, copy) UIColor *progressColor;
+
+- (void)setAudioURL:(NSURL *)audioURL zoomStartSamples:(long int)zoomStartSamples zoomEndSamples:(long int)zoomEndSamples;
+
 @end
 
 @protocol FDWaveformViewDelegate <NSObject>
